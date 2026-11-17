@@ -1,78 +1,833 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Portfolio | Minimalist Design</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trident Tours · 3D Walkthroughs</title>
+<meta name="description" content="Premium 3D walkthroughs for waterfront homes, yachts, towers and private aircraft. Calgary-based. Worldwide ready.">
+<meta name="theme-color" content="#132c48">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #132c48;
+    --navy-deep: #0a1828;
+    --brass: #8c7448;
+    --brass-on-dark: #d8bd8a;
+    --cream: #fbf8f2;
+    --ink: #e9edf2;
+    --muted: #b9c3cf;
+    --glass: rgba(10, 24, 40, 0.72);
+    --line: rgba(216, 189, 138, 0.35);
+    --ease-cam: cubic-bezier(.65, 0, .15, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--navy-deep);
+    color: var(--ink);
+    font-family: "Manrope", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+
+  /* ---------- Stage / scene ---------- */
+  #stage {
+    position: fixed; inset: 0;
+    transform-origin: 0 0;
+    transition: transform 1.5s var(--ease-cam);
+  }
+  #scene { width: 100%; height: 100%; display: block; pointer-events: none; overflow: visible; }
+  .hit { pointer-events: all; cursor: pointer; fill: #000; fill-opacity: 0; }
+  #dim { opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+  #spot { pointer-events: none; opacity: 0; transition: opacity .3s ease; }
+  body.hovering #dim { opacity: .58; }
+  body.hovering #spot, body.zoomed #spot { opacity: 1; }
+  body.zoomed #dim { opacity: .5; }
+
+  .marker { transition: opacity .3s ease; }
+  .marker .ring { transform-box: fill-box; transform-origin: center; animation: pulse 2.6s ease-out infinite; }
+  body.hovering .marker, body.zoomed .marker { opacity: 0; }
+  @keyframes pulse { 0% { transform: scale(.6); opacity: .9 } 80%, 100% { transform: scale(2.2); opacity: 0 } }
+
+  .cloud { animation: drift 140s linear infinite alternate; }
+  .cloud.slow { animation-duration: 220s; }
+  @keyframes drift { from { transform: translateX(-60px) } to { transform: translateX(90px) } }
+  .tw { animation: twinkle 3.2s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: .15 } 50% { opacity: .9 } }
+  .flame { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker .9s ease-in-out infinite alternate; }
+  .flame.b { animation-duration: .7s; animation-delay: -.3s; }
+  @keyframes flicker { from { transform: scaleY(.82) skewX(-3deg) } to { transform: scaleY(1.12) skewX(4deg) } }
+  .blink { animation: blink 1.6s steps(1) infinite; }
+  @keyframes blink { 0%, 70% { opacity: 1 } 71%, 100% { opacity: .1 } }
+
+  /* ---------- Chrome (nav, hero, chips) ---------- */
+  .ui { transition: opacity .5s ease, transform .6s var(--ease-cam); }
+  body.zoomed .ui { opacity: 0; pointer-events: none; }
+  body.zoomed .hero { transform: translateY(-24px); }
+  body.hovering .hero { opacity: .3; }
+
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px clamp(16px, 4vw, 48px);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand svg { width: 28px; height: 28px; color: var(--brass-on-dark); }
+  .brand span { font-family: "Fraunces", serif; font-size: 21px; letter-spacing: .01em; color: var(--cream); }
+  .links { display: flex; align-items: center; gap: 28px; font-size: 14px; font-weight: 500; }
+  .links a { text-decoration: none; color: var(--ink); opacity: .85; transition: opacity .2s; }
+  .links a:hover { opacity: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 0 20px; border-radius: 999px;
+    font: 600 14px/1 "Manrope", sans-serif; text-decoration: none; cursor: pointer;
+    border: 1px solid transparent; transition: background .2s, color .2s, border-color .2s, transform .2s;
+  }
+  .btn-light { background: var(--cream); color: var(--navy); }
+  .btn-light:hover { background: #fff; transform: translateY(-1px); }
+  .btn-ghost { border-color: rgba(251, 248, 242, .35); color: var(--cream); background: transparent; }
+  .btn-ghost:hover { border-color: var(--brass-on-dark); color: var(--brass-on-dark); }
+  .links .btn { opacity: 1; }
+  .links .btn-light { color: var(--navy); }
+
+  .hero {
+    position: fixed; z-index: 5; left: clamp(16px, 4vw, 48px); top: clamp(96px, 16vh, 160px);
+    max-width: min(560px, calc(100vw - 32px)); pointer-events: none;
+    text-shadow: 0 2px 30px rgba(6, 16, 30, .55);
+  }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--brass-on-dark); margin: 0 0 18px; }
+  .hero h1 {
+    font-family: "Fraunces", serif; font-weight: 300; margin: 0;
+    font-size: clamp(40px, 6.2vw, 84px); line-height: .98; letter-spacing: -.02em; color: var(--cream);
+  }
+  .hero h1 em { font-style: italic; color: var(--brass-on-dark); }
+  .hero p { margin: 22px 0 0; max-width: 430px; font-size: 16px; line-height: 1.6; color: var(--ink); opacity: .92; }
+
+  .chips {
+    position: fixed; z-index: 6; left: 50%; bottom: 26px; transform: translateX(-50%);
+    display: flex; gap: 8px; padding: 6px; border-radius: 999px;
+    background: rgba(10, 24, 40, .55); border: 1px solid rgba(251, 248, 242, .14);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none;
+  }
+  body.zoomed .chips { transform: translate(-50%, 20px); }
+  .chip {
+    flex: none; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px;
+    border-radius: 999px; border: 0; background: transparent; color: var(--ink);
+    font: 600 13px/1 "Manrope", sans-serif; cursor: pointer; transition: background .2s, color .2s;
+  }
+  .chip b { font-weight: 600; font-size: 11px; color: var(--brass-on-dark); letter-spacing: .08em; }
+  .chip:hover, .chip.on, .chip:focus-visible { background: var(--cream); color: var(--navy); outline: none; }
+  .chip:hover b, .chip.on b, .chip:focus-visible b { color: var(--brass); }
+
+  .hint {
+    position: fixed; z-index: 5; right: clamp(16px, 4vw, 48px); bottom: 36px;
+    display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .08em; color: var(--muted);
+  }
+  .hint i { width: 16px; height: 24px; border: 1.5px solid currentColor; border-radius: 8px; position: relative; }
+  .hint i::after { content: ""; position: absolute; left: 50%; top: 5px; width: 2px; height: 5px; margin-left: -1px; background: currentColor; border-radius: 2px; animation: wheel 1.8s ease-in-out infinite; }
+  @keyframes wheel { 0% { opacity: 0; transform: translateY(-2px) } 40% { opacity: 1 } 100% { opacity: 0; transform: translateY(5px) } }
+  .based { position: fixed; z-index: 5; left: clamp(16px, 4vw, 48px); bottom: 36px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+
+  /* ---------- Hover tag ---------- */
+  .tag {
+    position: fixed; z-index: 8; pointer-events: none;
+    transform: translate(-50%, calc(-100% - 18px)) scale(.96); opacity: 0;
+    transition: opacity .25s ease, transform .3s var(--ease-cam);
+    padding: 14px 18px 14px 16px; min-width: 220px; border-radius: 14px;
+    background: var(--glass); border: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  }
+  .tag.show { opacity: 1; transform: translate(-50%, calc(-100% - 18px)) scale(1); }
+  .tag::after { content: ""; position: absolute; left: 50%; bottom: -18px; width: 1px; height: 18px; background: linear-gradient(var(--brass-on-dark), transparent); }
+  .tag small { display: block; font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--brass-on-dark); }
+  .tag strong { display: block; margin-top: 6px; font: 400 21px/1.15 "Fraunces", serif; color: var(--cream); }
+  .tag span { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+  .tag em { display: inline-flex; gap: 6px; margin-top: 10px; font-style: normal; font-size: 12px; font-weight: 600; color: var(--cream); }
+
+  /* ---------- Fly-in panel ---------- */
+  .panel {
+    position: fixed; z-index: 20; top: 0; left: 0; bottom: 0; width: min(480px, 100vw);
+    padding: 28px clamp(20px, 3.4vw, 44px) 32px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(90deg, rgba(8, 20, 34, .92) 0%, rgba(8, 20, 34, .8) 75%, rgba(8, 20, 34, 0) 100%);
+    transform: translateX(-40px); opacity: 0; visibility: hidden;
+    transition: opacity .5s ease, transform .7s var(--ease-cam), visibility 0s linear .7s;
+    overflow-y: auto;
+  }
+  body.open .panel { transform: none; opacity: 1; visibility: visible; transition: opacity .6s ease, transform .8s var(--ease-cam), visibility 0s; }
+  .back {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 12px;
+    border-radius: 999px; border: 1px solid rgba(251, 248, 242, .25); background: transparent; color: var(--cream);
+    font: 600 13px/1 "Manrope", sans-serif; cursor: pointer; transition: border-color .2s, color .2s;
+  }
+  .back:hover, .back:focus-visible { border-color: var(--brass-on-dark); color: var(--brass-on-dark); outline: none; }
+  .panel-body { margin: auto 0; padding: 36px 0; max-width: 400px; }
+  .panel .num { font: 300 15px/1 "Fraunces", serif; color: var(--brass-on-dark); letter-spacing: .1em; }
+  .panel .kicker { margin: 14px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--brass-on-dark); }
+  .panel h2 { margin: 14px 0 0; font: 300 clamp(32px, 3.6vw, 46px)/1.04 "Fraunces", serif; letter-spacing: -.015em; color: var(--cream); }
+  .panel p { margin: 18px 0 0; font-size: 15px; line-height: 1.65; color: var(--ink); opacity: .9; }
+  .facts { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .facts li { display: flex; gap: 12px; align-items: baseline; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink); }
+  .facts li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--brass-on-dark); transform: translateY(-2px); }
+  .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .panel-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+  .next { background: none; border: 0; color: var(--cream); font: 600 13px/1 "Manrope", sans-serif; cursor: pointer; padding: 12px 0; display: inline-flex; gap: 8px; align-items: center; }
+  .next:hover, .next:focus-visible { color: var(--brass-on-dark); outline: none; }
+
+  @media (max-width: 900px) {
+    .links a:not(.btn) { display: none; }
+    .hint, .based { display: none; }
+    .chips { bottom: 16px; }
+    .panel {
+      top: auto; width: 100vw; max-height: 62vh; padding-top: 20px;
+      background: linear-gradient(0deg, rgba(8, 20, 34, .96) 78%, rgba(8, 20, 34, 0) 100%);
+      transform: translateY(40px);
+    }
+    .panel-body { padding: 20px 0 16px; margin: 0; }
+    .panel h2 { font-size: 30px; }
+    .facts { margin-top: 18px; }
+    .facts li { padding: 10px 0; }
+  }
+  @media (max-width: 520px) {
+    .brand span { font-size: 18px; }
+    .links .btn { padding: 0 14px; }
+    .hero { top: 100px; }
+    .hero p { font-size: 14.5px; margin-top: 16px; }
+    .eyebrow { margin-bottom: 12px; }
+    .chips { gap: 0; padding: 4px; }
+    .chip { padding: 0 10px; gap: 6px; font-size: 12.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: .01s !important; }
+  }
+</style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30">
+<body>
 
-    <nav class="fixed top-0 w-full z-50 glass border-b border-zinc-800">
-        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <span class="text-xl font-bold tracking-tighter">DESIGN.CO</span>
-            <div class="space-x-8 text-sm font-medium text-zinc-400">
-                <a href="#" class="hover:text-white transition">Work</a>
-                <a href="#" class="hover:text-white transition">About</a>
-                <a href="#" class="px-4 py-2 bg-white text-black rounded-full hover:bg-zinc-200 transition">Contact</a>
-            </div>
-        </div>
-    </nav>
+<div id="stage">
+<svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Miami waterfront at dusk: a modern villa on the right, a yacht at a dock on the left, a city skyline in the distance and a private jet overhead">
+  <defs>
+    <linearGradient id="sky" gradientUnits="userSpaceOnUse" x1="0" y1="-900" x2="0" y2="522">
+      <stop offset="0" stop-color="#060f1d"/>
+      <stop offset=".45" stop-color="#132c48"/>
+      <stop offset=".7" stop-color="#3b4a6e"/>
+      <stop offset=".84" stop-color="#8a6a84"/>
+      <stop offset=".94" stop-color="#e48c6c"/>
+      <stop offset="1" stop-color="#f8c78f"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="800" cy="510" r="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd9a0" stop-opacity=".9"/>
+      <stop offset=".25" stop-color="#f6a477" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#f6a477" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="water" gradientUnits="userSpaceOnUse" x1="0" y1="521" x2="0" y2="880">
+      <stop offset="0" stop-color="#e7a585"/>
+      <stop offset=".07" stop-color="#a77882"/>
+      <stop offset=".35" stop-color="#3e6683"/>
+      <stop offset="1" stop-color="#14344d"/>
+    </linearGradient>
+    <linearGradient id="lawn" gradientUnits="userSpaceOnUse" x1="0" y1="646" x2="0" y2="1200">
+      <stop offset="0" stop-color="#5d7f49"/>
+      <stop offset=".18" stop-color="#3b6438"/>
+      <stop offset=".5" stop-color="#21452a"/>
+      <stop offset="1" stop-color="#11281a"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a2f4c"/>
+      <stop offset=".8" stop-color="#363a5a"/>
+      <stop offset="1" stop-color="#7d6378"/>
+    </linearGradient>
+    <linearGradient id="tower2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#232843"/>
+      <stop offset=".85" stop-color="#2f3452"/>
+      <stop offset="1" stop-color="#a37078"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6ece4"/>
+      <stop offset="1" stop-color="#d9c6bb"/>
+    </linearGradient>
+    <linearGradient id="glassWarm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe3ad"/>
+      <stop offset=".6" stop-color="#f7b06a"/>
+      <stop offset="1" stop-color="#d9824e"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6f4b31"/>
+      <stop offset="1" stop-color="#4c3221"/>
+    </linearGradient>
+    <linearGradient id="pool" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8ff1f2"/>
+      <stop offset=".5" stop-color="#2cc3d6"/>
+      <stop offset="1" stop-color="#127fa6"/>
+    </linearGradient>
+    <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfd5de"/>
+    </linearGradient>
+    <linearGradient id="yglass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1b2a3d"/>
+      <stop offset=".55" stop-color="#2d4560"/>
+      <stop offset=".75" stop-color="#e3a283"/>
+      <stop offset="1" stop-color="#1b2a3d"/>
+    </linearGradient>
+    <linearGradient id="fuse" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9d6"/>
+      <stop offset=".45" stop-color="#eef1f5"/>
+      <stop offset="1" stop-color="#9aa6b8"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="deck" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#9a7152"/>
+      <stop offset="1" stop-color="#c39672"/>
+    </linearGradient>
+    <radialGradient id="warm" r=".5">
+      <stop offset="0" stop-color="#ffc77a" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ffc77a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="50%" cy="45%" r="75%">
+      <stop offset=".55" stop-color="#050c16" stop-opacity="0"/>
+      <stop offset="1" stop-color="#050c16" stop-opacity=".55"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="blur8" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2.4" result="fat"/>
+      <feFlood flood-color="#fff4dc"/>
+      <feComposite in2="fat" operator="in" result="outline"/>
+      <feGaussianBlur in="fat" stdDeviation="10" result="halo"/>
+      <feFlood flood-color="#e8c88a" flood-opacity=".95"/>
+      <feComposite in2="halo" operator="in" result="glowc"/>
+      <feComponentTransfer in="SourceGraphic" result="bright">
+        <feFuncR type="linear" slope="1.12"/><feFuncG type="linear" slope="1.12"/><feFuncB type="linear" slope="1.1"/>
+      </feComponentTransfer>
+      <feMerge><feMergeNode in="glowc"/><feMergeNode in="outline"/><feMergeNode in="bright"/></feMerge>
+    </filter>
+    <clipPath id="waterClip"><rect x="-1200" y="522" width="4000" height="3000"/></clipPath>
+  </defs>
 
-    <header class="pt-40 pb-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <h1 class="text-6xl md:text-8xl font-bold tracking-tight mb-8">
-                Building digital <br> <span class="text-zinc-500">experiences.</span>
-            </h1>
-            <p class="max-w-xl text-lg text-zinc-400 leading-relaxed mb-10">
-                A multidisciplinary designer and developer focused on creating functional, 
-                high-impact interfaces that bridge the gap between humans and code.
-            </p>
-            <div class="flex gap-4">
-                <div class="h-1 w-20 bg-indigo-500 mt-3"></div>
-                <span class="uppercase tracking-widest text-xs font-semibold text-indigo-400">Available for projects</span>
-            </div>
-        </div>
-    </header>
+  <!-- Sky -->
+  <rect x="-1200" y="-3000" width="4000" height="3524" fill="url(#sky)"/>
+  <g id="stars"></g>
+  <circle cx="800" cy="510" r="420" fill="url(#sunGlow)"/>
+  <circle cx="800" cy="512" r="44" fill="#ffe4b0"/>
+  <g opacity=".9">
+    <g class="cloud slow"><ellipse cx="260" cy="300" rx="260" ry="9" fill="#d98a80" opacity=".35"/><ellipse cx="380" cy="318" rx="170" ry="6" fill="#f0a68a" opacity=".4"/></g>
+    <g class="cloud"><ellipse cx="1180" cy="330" rx="300" ry="10" fill="#d98a80" opacity=".32"/><ellipse cx="1060" cy="350" rx="190" ry="6" fill="#f6b38f" opacity=".45"/></g>
+    <g class="cloud slow"><ellipse cx="760" cy="412" rx="360" ry="7" fill="#f8b994" opacity=".5"/><ellipse cx="560" cy="440" rx="200" ry="5" fill="#ffd0a2" opacity=".55"/></g>
+    <g class="cloud"><ellipse cx="1360" cy="440" rx="240" ry="6" fill="#ffc69e" opacity=".5"/></g>
+    <g class="cloud slow"><ellipse cx="500" cy="180" rx="320" ry="12" fill="#556284" opacity=".35"/><ellipse cx="1300" cy="200" rx="280" ry="10" fill="#556284" opacity=".3"/></g>
+  </g>
 
-    <section class="max-w-6xl mx-auto px-6 py-20">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="group cursor-pointer">
-                <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-600 transition-all duration-500">
-                    <div class="w-full h-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 group-hover:scale-105 transition-transform duration-700"></div>
-                </div>
-                <h3 class="mt-6 text-xl font-semibold">Nova Banking App</h3>
-                <p class="text-zinc-500 text-sm">Fintech � UI/UX Design</p>
-            </div>
-            <div class="group cursor-pointer">
-                <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-600 transition-all duration-500">
-                    <div class="w-full h-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 group-hover:scale-105 transition-transform duration-700"></div>
-                </div>
-                <h3 class="mt-6 text-xl font-semibold">Eco-Tracker</h3>
-                <p class="text-zinc-500 text-sm">Sustainability � Web App</p>
-            </div>
-        </div>
-    </section>
+  <!-- 04 · Private jet -->
+  <g id="hs-jet" class="hotspot" data-key="jet">
+    <g id="jet-art" transform="translate(905 150)">
+      <path d="M212 13 L760 4 L760 9 Z" fill="url(#trail)" opacity=".8"/>
+      <path d="M212 19 L760 16 L760 21 Z" fill="url(#trail)" opacity=".55"/>
+      <path d="M112 14 L136 14 L152 0 L144 0 Z" fill="#8c97aa"/>
+      <path d="M0 22 C8 11 38 8 70 8 L190 8 C204 8 212 12 216 16 L216 24 C200 30 62 32 20 30 C8 29 0 26 0 22 Z" fill="url(#fuse)"/>
+      <path d="M6 24 C60 26 160 25 216 20" stroke="#8c7448" stroke-width="1.6" fill="none"/>
+      <path d="M13 16 L30 12 L32 17 L15 19 Z" fill="#1b2635"/>
+      <g fill="#2b3a4f">
+        <ellipse cx="62" cy="15" rx="2.6" ry="2"/><ellipse cx="76" cy="15" rx="2.6" ry="2"/><ellipse cx="90" cy="15" rx="2.6" ry="2"/>
+        <ellipse cx="104" cy="15" rx="2.6" ry="2"/><ellipse cx="118" cy="15" rx="2.6" ry="2"/><ellipse cx="132" cy="15" rx="2.6" ry="2"/><ellipse cx="146" cy="15" rx="2.6" ry="2"/>
+      </g>
+      <path d="M92 24 L142 24 L180 54 L164 54 Z" fill="#d9dee6"/>
+      <path d="M92 24 L142 24 L146 27 L96 27 Z" fill="#aab3c1"/>
+      <ellipse cx="180" cy="9" rx="17" ry="6.5" fill="#dfe4ea"/>
+      <ellipse cx="166" cy="9" rx="3" ry="5" fill="#3b4658"/>
+      <path d="M186 8 L202 -27 L215 -27 L216 10 Z" fill="#e7ebf0"/>
+      <path d="M194 -25 L228 -28 L228 -23 L197 -21 Z" fill="#cfd6df"/>
+      <path d="M203 -16 L214 -16" stroke="#8c7448" stroke-width="2"/>
+      <circle class="blink" cx="178" cy="54" r="2" fill="#7dffa4"/>
+      <circle class="blink" cx="215" cy="-27" r="1.8" fill="#fff"/>
+    </g>
+    <rect class="hit" x="890" y="105" width="260" height="110" rx="20"/>
+  </g>
 
-    <footer class="border-t border-zinc-900 py-12 px-6">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-zinc-600 text-sm">
-            <p>&copy; 2026 Portfolio Studio. All rights reserved.</p>
-            <div class="flex gap-6 mt-4 md:mt-0">
-                <a href="#" class="hover:text-zinc-300">Twitter</a>
-                <a href="#" class="hover:text-zinc-300">LinkedIn</a>
-                <a href="#" class="hover:text-zinc-300">GitHub</a>
-            </div>
-        </div>
-    </footer>
+  <!-- Distant skyline (decor) -->
+  <g id="farCity" opacity=".55"></g>
+  <path d="M-200 518 L560 519" stroke="#6b5a70" stroke-width="2" opacity=".6"/>
+  <g id="causewayLights"></g>
 
+  <!-- 03 · City towers -->
+  <g id="hs-city" class="hotspot" data-key="city">
+    <g id="city-art"></g>
+    <rect class="hit" x="625" y="200" width="380" height="325" rx="10"/>
+  </g>
+
+  <!-- Water -->
+  <rect x="-1200" y="521" width="4000" height="3000" fill="url(#water)"/>
+  <g clip-path="url(#waterClip)">
+    <use href="#city-art" transform="translate(0 1046) scale(1 -1)" opacity=".28" filter="url(#soft)"/>
+    <ellipse cx="800" cy="580" rx="46" ry="90" fill="#ffd3a0" opacity=".35" filter="url(#blur8)"/>
+    <g id="shimmer"></g>
+    <use href="#yacht-art" transform="translate(0 1252) scale(1 -1)" opacity=".22" filter="url(#soft)"/>
+  </g>
+
+  <!-- 02 · Yacht -->
+  <g id="hs-yacht" class="hotspot" data-key="yacht">
+    <g id="yacht-art" transform="translate(86 540)">
+      <path d="M0 52 C30 50 60 48 90 47 L334 46 L332 72 L320 86 L40 86 C22 78 8 66 0 52 Z" fill="url(#hull)"/>
+      <path d="M36 80 L324 80 L320 86 L40 86 Z" fill="#132c48"/>
+      <path d="M8 55 L334 50" stroke="#d8bd8a" stroke-width="1.6"/>
+      <path d="M118 62 L264 61 L262 67 L120 68 Z" fill="#1b2838"/>
+      <g fill="#1b2838"><circle cx="78" cy="64" r="2"/><circle cx="92" cy="64" r="2"/><circle cx="282" cy="63" r="2"/><circle cx="296" cy="63" r="2"/></g>
+      <path d="M68 47 L100 30 L304 30 L316 47 Z" fill="#f7f7f8"/>
+      <path d="M108 34 L296 34 L302 44 L98 44 Z" fill="url(#yglass)"/>
+      <path d="M128 30 L154 16 L282 16 L289 30 Z" fill="#eef0f3"/>
+      <path d="M160 19 L276 19 L280 27 L150 27 Z" fill="url(#yglass)"/>
+      <path d="M184 16 L200 6 L262 6 L267 16 Z" fill="#e6e9ed"/>
+      <path d="M176 6 L274 3 L274 7 L178 8 Z" fill="#fbfbfc"/>
+      <path d="M228 4 L235 -16 L240 -16 L238 4 Z" fill="#dde1e6"/>
+      <circle cx="238" cy="-19" r="3.4" fill="#f4f5f7"/>
+      <g fill="#ffcf8a"><rect x="210" y="36" width="12" height="6" opacity=".9"/><rect x="250" y="36" width="9" height="6" opacity=".8"/><rect x="190" y="21" width="10" height="5" opacity=".8"/></g>
+      <circle cx="312" cy="44" r="10" fill="url(#warm)"/>
+      <circle cx="312" cy="44" r="1.8" fill="#fff2d6"/>
+    </g>
+    <rect class="hit" x="80" y="510" width="350" height="125" rx="14"/>
+  </g>
+
+  <!-- Backyard lawn & seawall -->
+  <path d="M-1200 3200 L-1200 776 L-500 774 C200 760 760 746 1040 678 C1180 648 1400 652 2800 648 L2800 3200 Z" fill="url(#lawn)"/>
+  <path d="M-1200 776 L-500 774 C200 760 760 746 1040 678 C1180 648 1400 652 2800 648" stroke="#e8dccb" stroke-width="5" fill="none" opacity=".85"/>
+  <path d="M-1200 781 L-500 779 C200 765 760 751 1040 683 C1180 653 1400 657 2800 653" stroke="#1c2f22" stroke-width="3" fill="none" opacity=".6"/>
+  <!-- Dock (decor) -->
+  <g id="dock">
+    <path d="M330 606 L480 606 L486 616 L324 616 Z" fill="url(#deck)"/>
+    <path d="M324 616 L486 616 L486 621 L324 621 Z" fill="#5b3f2c"/>
+    <path d="M548 772 L684 772 L432 612 L402 612 Z" fill="url(#deck)"/>
+    <path d="M684 772 L432 612 L432 618 L684 781 Z" fill="#5b3f2c"/>
+    <g id="planks"></g>
+    <g id="pilings"></g>
+    <path d="M392 588 C380 600 372 606 366 612" stroke="#e9e2d6" stroke-width="1" fill="none" opacity=".7"/>
+    <path d="M412 588 C430 600 440 606 456 610" stroke="#e9e2d6" stroke-width="1" fill="none" opacity=".7"/>
+  </g>
+
+  <!-- 01 · Waterfront house -->
+<ellipse cx="1300" cy="668" rx="290" ry="16" fill="#0f2318" opacity=".45"/>
+  <ellipse cx="1290" cy="670" rx="170" ry="14" fill="url(#warm)" opacity=".5"/>
+  <g id="hs-house" class="hotspot" data-key="house">
+    <g id="house-art">
+      <path d="M1088 666 L1544 660 L1588 702 L1056 708 Z" fill="#e6d6c4"/>
+      <path d="M1056 708 L1588 702 L1588 708 L1056 714 Z" fill="#a8927d"/>
+      <path d="M1118 676 L1502 671 L1534 696 L1092 701 Z" fill="url(#pool)"/>
+      <path d="M1150 684 L1240 683 M1300 688 L1420 686 M1200 694 L1270 693" stroke="#d9fbff" stroke-width="1.4" opacity=".8"/>
+      <rect x="1120" y="562" width="372" height="99" fill="url(#wall)"/>
+      <rect x="1138" y="574" width="302" height="82" fill="url(#glassWarm)"/>
+      <g fill="#5a3b2a" opacity=".5">
+        <rect x="1206" y="630" width="76" height="18" rx="4"/><rect x="1300" y="636" width="34" height="12" rx="2"/>
+        <rect x="1386" y="604" width="3" height="44"/><path d="M1378 600 L1396 600 L1392 608 L1382 608 Z"/>
+      </g>
+      <g fill="#fff3d0"><circle cx="1180" cy="586" r="3"/><circle cx="1244" cy="586" r="3"/><circle cx="1306" cy="586" r="3"/></g>
+      <g stroke="#3a2e2a" stroke-width="2"><path d="M1200 574 V656 M1262 574 V656 M1324 574 V656 M1386 574 V656"/></g>
+      <rect x="1446" y="562" width="46" height="99" fill="url(#wall)"/>
+      <path d="M1492 562 L1526 571 L1526 652 L1492 661 Z" fill="#b7a197"/>
+      <rect x="1080" y="552" width="7" height="110" fill="#efe5dc"/>
+      <rect x="1100" y="551" width="430" height="11" fill="#fdf9f5"/>
+      <path d="M1530 551 L1546 556 L1546 565 L1530 562 Z" fill="#cbb8ad"/>
+      <rect x="1068" y="484" width="304" height="68" fill="url(#wall)"/>
+      <rect x="1084" y="496" width="222" height="48" fill="url(#glassWarm)"/>
+      <g stroke="#3a2e2a" stroke-width="2"><path d="M1140 496 V544 M1196 496 V544 M1252 496 V544"/></g>
+      <rect x="1314" y="490" width="46" height="62" fill="url(#wood)"/>
+      <g stroke="#3a2618" stroke-width="1" opacity=".7"><path d="M1322 490 V552 M1330 490 V552 M1338 490 V552 M1346 490 V552 M1354 490 V552"/></g>
+      <rect x="1052" y="473" width="338" height="11" fill="#fffcf9"/>
+      <path d="M1390 473 L1404 478 L1404 487 L1390 484 Z" fill="#cbb8ad"/>
+      <rect x="1384" y="535" width="132" height="16" fill="#bfe3ea" opacity=".35" stroke="#fff" stroke-opacity=".6"/>
+    </g>
+    <rect class="hit" x="1040" y="460" width="560" height="260" rx="14"/>
+  </g>
+
+  <!-- Palms, path, fire pit, foreground (decor) -->
+  <g id="palms"></g>
+  <g id="path"></g>
+  <g id="firepit" transform="translate(980 818)">
+    <ellipse cx="0" cy="-6" rx="90" ry="40" fill="url(#warm)" opacity=".7"/>
+    <ellipse cx="0" cy="6" rx="36" ry="9" fill="#4a3f38"/>
+    <ellipse cx="0" cy="3" rx="31" ry="6" fill="#1c1612"/>
+    <path class="flame" d="M-12 3 C-14 -10 -4 -16 -2 -28 C6 -16 14 -10 10 3 Z" fill="#ff9d3c"/>
+    <path class="flame b" d="M-5 3 C-6 -6 0 -10 2 -18 C7 -10 9 -5 6 3 Z" fill="#ffe08a"/>
+    <path d="M-92 4 L-58 0 L-54 14 L-90 18 Z" fill="#efe7dc"/><path d="M-92 4 L-86 -14 L-64 -16 L-58 0 Z" fill="#e2d8cb"/>
+    <path d="M58 0 L94 4 L92 18 L54 14 Z" fill="#efe7dc"/><path d="M58 0 L64 -16 L88 -14 L94 4 Z" fill="#e2d8cb"/>
+  </g>
+  <g id="tufts"></g>
+  <rect x="-1200" y="-3000" width="4000" height="7000" fill="url(#vignette)" pointer-events="none"/>
+
+  <!-- Highlight layer -->
+  <rect id="dim" x="-1200" y="-3000" width="4000" height="7000" fill="#050d18"/>
+  <use id="spot" href="#house-art" filter="url(#glow)"/>
+  <g id="markers"></g>
+</svg>
+</div>
+
+<header class="nav ui">
+  <a class="brand" href="https://tridentours.com/" aria-label="Trident Tours home">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <path d="M16 30V8M16 4l-2.5 4h5L16 4zM8 6v6a8 8 0 0 0 16 0V6M8 6l-2 3M8 6l2 3M24 6l-2 3M24 6l2 3M12 26h8"/>
+    </svg>
+    <span>Trident Tours</span>
+  </a>
+  <nav class="links" aria-label="Main">
+    <a href="https://tridentours.com/work">Work</a>
+    <a href="https://tridentours.com/how-it-works">How it works</a>
+    <a href="https://tridentours.com/pricing">Pricing</a>
+    <a href="https://tridentours.com/contact">Contact</a>
+    <a class="btn btn-light" href="https://tridentours.com/book">Request a quote</a>
+  </nav>
+</header>
+
+<section class="hero ui">
+  <p class="eyebrow">Calgary-based · Worldwide ready</p>
+  <h1>Spaces we bring to life. <em>Step inside.</em></h1>
+  <p>Premium 3D walkthroughs for waterfront homes, yachts, towers and private aircraft. Pick a space in the scene and we’ll take you in.</p>
+</section>
+
+<div class="tag" id="tag" aria-hidden="true"><small></small><strong></strong><span></span><em>Click to step inside →</em></div>
+
+<nav class="chips ui" id="chips" aria-label="Spaces"></nav>
+<div class="hint ui" aria-hidden="true"><i></i>Hover the scene · click to step inside</div>
+<div class="based ui">Based in Calgary, Alberta · Serving clients worldwide</div>
+
+<aside class="panel" id="panel" aria-hidden="true" aria-live="polite">
+  <button class="back" id="back" type="button"><span aria-hidden="true">←</span> Back to the shore</button>
+  <div class="panel-body">
+    <div class="num" id="pNum"></div>
+    <p class="kicker" id="pKicker"></p>
+    <h2 id="pTitle"></h2>
+    <p id="pBody"></p>
+    <ul class="facts" id="pFacts"></ul>
+    <div class="ctas">
+      <a class="btn btn-light" id="pCta" href="#"></a>
+      <a class="btn btn-ghost" id="pCta2" href="#"></a>
+    </div>
+  </div>
+  <div class="panel-foot">
+    <span>Tridentours@gmail.com · +1 825 735 1066</span>
+    <button class="next" id="next" type="button"></button>
+  </div>
+</aside>
+
+<script>
+(() => {
+  const SITE = "https://tridentours.com";
+  const SPACES = {
+    house: {
+      num: "01", chip: "Homes", kicker: "Homes · Airbnb · Builders",
+      tagTitle: "Waterfront Homes", tagSub: "3D home walkthroughs",
+      title: "Waterfront homes, walked room by room.",
+      body: "Show every room with a premium 3D home tour. Choose on-site capture or a virtual build, with optional virtually staged rooms inside the walkthrough.",
+      facts: ["On-site capture or virtual build", "2D floor plan and 3D dollhouse view", "Delivered as a complete listing page"],
+      cta: ["Explore home tours", SITE + "/services/homes"], cta2: ["See a sample listing", SITE + "/sample-listing"]
+    },
+    yacht: {
+      num: "02", chip: "Yachts", kicker: "Yachts & Marine",
+      tagTitle: "Yachts & Marine", tagSub: "Walkable tours, wherever berthed",
+      title: "Walkable tours for vessels, wherever they’re berthed.",
+      body: "Bespoke 3D walkthroughs for yachts and marine interiors. Our Calgary studio plans worldwide capture or virtual builds, with scope agreed by quote.",
+      facts: ["360° tour, photo gallery and deck plans", "Full specifications on a shareable page", "Worldwide capture by request"],
+      cta: ["Explore yacht tours", SITE + "/services/yachts"], cta2: ["Walk the Oceanic 143", SITE + "/oceanic-143"]
+    },
+    city: {
+      num: "03", chip: "Towers", kicker: "Commercial · Residential towers",
+      tagTitle: "Towers & Commercial", tagSub: "Offices, retail, venues",
+      title: "Towers, offices and venues, ready to explore.",
+      body: "3D walkthroughs for offices, retail, restaurants, warehouses, community centres and schools. Priced per square foot, with quotes for large sites.",
+      facts: ["Ready in 2–5 business days", "Unbranded, MLS-friendly tour link", "Per-square-foot pricing in CAD"],
+      cta: ["Explore commercial tours", SITE + "/services/commercial"], cta2: ["See a commercial sample", SITE + "/sample-listing-2"]
+    },
+    jet: {
+      num: "04", chip: "Aviation", kicker: "Private aviation",
+      tagTitle: "Private Aviation", tagSub: "Cabin walkthroughs by quote",
+      title: "Private cabins, toured before take-off.",
+      body: "Our reach is wherever your property takes us, hangar included. Bespoke 3D cabin walkthroughs for private aircraft, with scheduled travel or virtual delivery.",
+      facts: ["Worldwide by request", "Time-zone friendly planning", "Invoicing in CAD"],
+      cta: ["Plan an international shoot", SITE + "/contact"], cta2: ["How it works", SITE + "/how-it-works"]
+    }
+  };
+  const ORDER = ["house", "yacht", "city", "jet"];
+  const MARKERS = { house: [1222, 452], yacht: [250, 500], city: [806, 186], jet: [1012, 112] };
+
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (s) => document.querySelector(s);
+  const svg = $("#scene"), stage = $("#stage"), spot = $("#spot"), tag = $("#tag");
+  const el = (name, attrs, parent) => {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  let seed = 7;
+  const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  /* ---------- Build procedural parts of the scene ---------- */
+  const stars = $("#stars");
+  for (let i = 0; i < 170; i++) {
+    const y = -1600 + rand() * 1820;
+    el("circle", { cx: -400 + rand() * 2400, cy: y, r: rand() * 1.3 + .3, fill: "#fff", opacity: (.15 + rand() * .6) * Math.min(1, (260 - y) / 300), class: rand() < .2 ? "tw" : "", style: `animation-delay:${-rand() * 3}s` }, stars);
+  }
+
+  const far = $("#farCity");
+  for (let x = -400; x < 2000; ) {
+    const w = 8 + rand() * 18, h = 6 + rand() * (x > 400 && x < 1200 ? 46 : 26);
+    if (x < 600 || x > 1030) el("rect", { x, y: 522 - h, width: w, height: h, fill: "#5b4a66" }, far);
+    x += w + rand() * 6;
+  }
+  const cl = $("#causewayLights");
+  for (let x = -180; x < 560; x += 22) el("circle", { cx: x, cy: 517, r: .9, fill: "#ffd79a", opacity: .8 }, cl);
+
+  const city = $("#city-art");
+  const towers = [
+    [632, 30, 118, 0], [664, 28, 168, 1], [694, 40, 228, 0], [736, 30, 150, 2], [770, 52, 316, 3],
+    [826, 36, 214, 1], [864, 26, 142, 0], [892, 44, 262, 2], [938, 30, 182, 0], [970, 26, 112, 1]
+  ];
+  towers.forEach(([x, w, h, style], i) => {
+    const top = 524 - h, fill = i % 2 ? "url(#tower)" : "url(#tower2)";
+    if (style === 3) {
+      el("path", { d: `M${x} 524 V${top + 30} L${x + w * .5} ${top} L${x + w} ${top + 30} V524 Z`, fill }, city);
+      el("path", { d: `M${x + w * .5} ${top} V${top - 34}`, stroke: "#8b8aa5", "stroke-width": 2 }, city);
+      el("circle", { cx: x + w * .5, cy: top - 34, r: 2.2, fill: "#ff6b5a", class: "blink" }, city);
+      el("path", { d: `M${x + 6} ${top + 30} L${x + w * .5} ${top + 6} L${x + w - 6} ${top + 30}`, stroke: "#d8bd8a", "stroke-width": 1.4, fill: "none", opacity: .8 }, city);
+    } else if (style === 2) {
+      el("path", { d: `M${x} 524 V${top + 14} Q${x + w * .5} ${top - 10} ${x + w} ${top + 14} V524 Z`, fill }, city);
+    } else if (style === 1) {
+      el("path", { d: `M${x} 524 V${top + 12} L${x + w} ${top} V524 Z`, fill }, city);
+    } else {
+      el("rect", { x, y: top, width: w, height: h, fill }, city);
+    }
+    for (let wy = top + 34; wy < 516; wy += 7) {
+      for (let wx = x + 4; wx < x + w - 4; wx += 6) {
+        if (rand() < .3) el("rect", { x: wx, y: wy, width: 3, height: 2.4, fill: "#ffd58a", opacity: .35 + rand() * .6 }, city);
+      }
+    }
+  });
+
+  const sh = $("#shimmer");
+  for (let i = 0; i < 260; i++) {
+    const y = 526 + Math.pow(rand(), 1.7) * 380;
+    const depth = (y - 520) / 380;
+    const x = -500 + rand() * 2600;
+    const inSun = Math.abs(x - 800) < 40 + depth * 160;
+    const len = (inSun ? 12 : 6) + depth * 60 * rand();
+    el("rect", {
+      x, y, width: len, height: .8 + depth * 1.6, rx: 1,
+      fill: inSun ? "#ffe0b2" : "#a9c9db", opacity: inSun ? .75 : .22,
+      class: rand() < .45 ? "tw" : "", style: `animation-delay:${-rand() * 3.2}s;animation-duration:${2.4 + rand() * 2.4}s`
+    }, sh);
+  }
+
+  // Dock planks & pilings (near edge y=772 x548..684, far edge y=612 x402..432)
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const planks = $("#planks"), pil = $("#pilings");
+  for (let i = 1; i < 34; i++) {
+    const t = Math.pow(i / 34, 1.5);
+    const y = lerp(612, 772, t), xl = lerp(402, 548, t), xr = lerp(432, 684, t);
+    el("path", { d: `M${xl} ${y} L${xr} ${y}`, stroke: "#5f4330", "stroke-width": .6 + t * 1.2, opacity: .7 }, planks);
+  }
+  for (let i = 0; i <= 8; i++) {
+    const t = Math.pow(i / 8, 1.4) * .7;
+    const y = lerp(612, 772, t), xl = lerp(402, 548, t), xr = lerp(432, 684, t), w = 2 + t * 5, h = 8 + t * 18;
+    el("rect", { x: xr - w * .3, y: y + 3, width: w, height: h, fill: "#3b2a1f" }, pil);
+    el("rect", { x: xr - w * .3, y: y - h * .9, width: w * .8, height: h * .9, fill: "#4a3424" }, pil);
+    el("circle", { cx: xr + w * .1, cy: y - h * .9 - 2, r: 14 + t * 18, fill: "url(#warm)", opacity: .55 }, pil);
+    el("circle", { cx: xr + w * .1, cy: y - h * .9 - 1, r: 1 + t * 1.6, fill: "#fff1cf" }, pil);
+    if (i % 2 === 0) el("rect", { x: xl - w * .5, y: y + 2, width: w * .8, height: h * .8, fill: "#3b2a1f" }, pil);
+  }
+  [[332, 616], [404, 618], [476, 616]].forEach(([x, y]) => el("rect", { x, y, width: 3, height: 10, fill: "#3b2a1f" }, pil));
+
+  // Palms
+  function palm(parent, x, y, h, lean, s, col) {
+    const tx = x + lean, ty = y - h, g = el("g", {}, parent);
+    const bw = 9 * s, tw = 4.5 * s, cx = x + lean * .15, cy = y - h * .5;
+    el("path", { d: `M${x - bw} ${y} Q${cx - bw * .7} ${cy} ${tx - tw} ${ty} L${tx + tw} ${ty} Q${cx + bw * .7} ${cy} ${x + bw} ${y} Z`, fill: col.trunk }, g);
+    for (let k = 1; k < 14; k++) {
+      const t = k / 14, px = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * cx + t * t * tx, py = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * cy + t * t * ty, w = lerp(bw, tw, t);
+      el("path", { d: `M${px - w} ${py} L${px + w} ${py - 2 * s}`, stroke: col.ring, "stroke-width": 1.2 * s, opacity: .6 }, g);
+    }
+    const angles = [-178, -150, -122, -96, -70, -42, -14, 12, 160, -60, -110];
+    angles.forEach((a, j) => {
+      const L = (95 + rand() * 50) * s, r = a * Math.PI / 180, dx = Math.cos(r), dy = Math.sin(r);
+      const droop = L * (.25 + .35 * (1 - Math.abs(dy)));
+      const ex = tx + dx * L, ey = ty + dy * L * .55 + droop;
+      const mx = tx + dx * L * .5, my = ty + dy * L * .5 - L * .1;
+      const nx = -dy * 9 * s, ny = dx * 9 * s;
+      el("path", { d: `M${tx} ${ty} Q${mx + nx} ${my + ny} ${ex} ${ey} Q${mx - nx * .25} ${my - ny * .25} ${tx} ${ty} Z`, fill: j > 8 ? col.leaf2 : col.leaf }, g);
+    });
+    el("circle", { cx: tx - 3 * s, cy: ty + 4 * s, r: 4 * s, fill: col.trunk }, g);
+    el("circle", { cx: tx + 4 * s, cy: ty + 5 * s, r: 3.6 * s, fill: col.trunk }, g);
+  }
+  const mid = { trunk: "#3d2f25", ring: "#21170f", leaf: "#1f3a2b", leaf2: "#2d4d36" };
+  const near = { trunk: "#1c1510", ring: "#0b0805", leaf: "#0c1a12", leaf2: "#13261a" };
+  const palms = $("#palms");
+  palm(palms, 1034, 694, 232, -28, 1, mid);
+  palm(palms, 1532, 704, 296, 24, 1.1, mid);
+  palm(palms, 1600, 714, 250, -14, 1, mid);
+  palm(palms, 1736, 760, 360, -40, 1.3, near);
+
+  // Stepping-stone path from the lawn to the dock, with garden lights
+  const path = $("#path");
+  const P0 = [600, 786], P1 = [700, 880], P2 = [820, 1500];
+  for (let i = 0; i < 18; i++) {
+    const t = Math.pow(i / 17, 1.35), u = 1 - t;
+    const x = u * u * P0[0] + 2 * u * t * P1[0] + t * t * P2[0], y = u * u * P0[1] + 2 * u * t * P1[1] + t * t * P2[1];
+    const rx = 9 + (y - 770) * .085;
+    el("ellipse", { cx: x, cy: y, rx, ry: rx * .32, fill: "#b9ab98" }, path);
+    el("ellipse", { cx: x, cy: y - rx * .05, rx: rx * .82, ry: rx * .22, fill: "#d8cbb9" }, path);
+    if (i % 3 === 1) {
+      const lx = x + rx * 2.4, h = rx * .9;
+      el("circle", { cx: lx, cy: y - h, r: rx * 1.8, fill: "url(#warm)", opacity: .6 }, path);
+      el("rect", { x: lx - rx * .08, y: y - h, width: rx * .16, height: h, fill: "#1a1a1a" }, path);
+      el("circle", { cx: lx, cy: y - h, r: rx * .14, fill: "#fff1cf" }, path);
+    }
+  }
+
+  const tufts = $("#tufts");
+  for (let i = 0; i < 70; i++) {
+    const x = -600 + rand() * 2800, y = 800 + Math.pow(rand(), .8) * 900, s = .6 + (y - 800) / 500;
+    let d = "";
+    for (let b = 0; b < 5; b++) { const bx = x + (b - 2) * 4 * s, lean = (rand() - .5) * 14 * s; d += `M${bx - 2 * s} ${y} Q${bx + lean * .3} ${y - 10 * s} ${bx + lean} ${y - (14 + rand() * 10) * s} Q${bx + lean * .2} ${y - 8 * s} ${bx + 2 * s} ${y} Z`; }
+    el("path", { d, fill: "#16301f", opacity: .8 }, tufts);
+  }
+
+  const markers = $("#markers");
+  ORDER.forEach((k) => {
+    const [x, y] = MARKERS[k], g = el("g", { class: "marker" }, markers);
+    el("circle", { class: "ring", cx: x, cy: y, r: 9, fill: "none", stroke: "#f3dcae", "stroke-width": 1.5 }, g);
+    el("circle", { cx: x, cy: y, r: 9, fill: "rgba(10,24,40,.55)", stroke: "#f3dcae", "stroke-width": 1.2 }, g);
+    el("circle", { cx: x, cy: y, r: 2.6, fill: "#f3dcae" }, g);
+  });
+
+  /* ---------- Camera framing: keep everything in view on any aspect ---------- */
+  let VB = { x: 0, y: 0, w: 1600, h: 900 };
+  function frame() {
+    const vw = innerWidth, vh = innerHeight, a = vw / vh;
+    let w, h, cx, f;
+    if (a >= 1.1) { h = Math.max(1600 / a, 860); w = h * a; cx = 800; f = .6; }
+    else { w = 1330; h = w / a; cx = 806; f = .6; }
+    VB = { x: cx - w / 2, y: 520 - f * h, w, h };
+    svg.setAttribute("viewBox", `${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
+
+  /* ---------- Gentle motion for the jet and yacht ---------- */
+  const jet = $("#jet-art"), yacht = $("#yacht-art");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function tick(t) {
+    const s = t / 1000;
+    jet.setAttribute("transform", `translate(${905 + Math.sin(s * .18) * 16} ${150 + Math.sin(s * .37) * 4}) rotate(${Math.sin(s * .37) * .6})`);
+    yacht.setAttribute("transform", `translate(86 ${540 + Math.sin(s * .9) * 1.3}) rotate(${Math.sin(s * .7) * .35} 170 70)`);
+    if (!still) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  /* ---------- Hover highlight ---------- */
+  const chips = $("#chips");
+  ORDER.forEach((k) => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.dataset.key = k;
+    b.innerHTML = `<b>${SPACES[k].num}</b>${SPACES[k].chip}`;
+    b.addEventListener("mouseenter", () => hover(k));
+    b.addEventListener("mouseleave", () => hover(null));
+    b.addEventListener("focus", () => { if (b.matches(":focus-visible")) hover(k); });
+    b.addEventListener("blur", () => hover(null));
+    b.addEventListener("click", () => flyTo(k));
+    chips.appendChild(b);
+  });
+
+  let active = null, hovered = null;
+  const hitOf = (k) => document.querySelector(`#hs-${k} .hit`);
+  function hover(k) {
+    if (active) return;
+    hovered = k;
+    document.body.classList.toggle("hovering", !!k);
+    chips.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c.dataset.key === k));
+    if (!k) { tag.classList.remove("show"); return; }
+    spot.setAttribute("href", `#${k}-art`);
+    const r = hitOf(k).getBoundingClientRect(), d = SPACES[k];
+    tag.querySelector("small").textContent = d.num + " · " + d.chip;
+    tag.querySelector("strong").textContent = d.tagTitle;
+    tag.querySelector("span").textContent = d.tagSub;
+    const x = Math.min(Math.max(r.left + r.width / 2, 130), innerWidth - 130);
+    tag.style.left = x + "px";
+    tag.style.top = Math.max(r.top + 10, 150) + "px";
+    tag.classList.add("show");
+  }
+  ORDER.forEach((k) => {
+    const h = hitOf(k);
+    h.addEventListener("mouseenter", () => hover(k));
+    h.addEventListener("mouseleave", () => hover(null));
+    h.addEventListener("click", (e) => { e.stopPropagation(); flyTo(k); });
+  });
+
+  /* ---------- Fly-in camera ---------- */
+  const panel = $("#panel");
+  let openTimer;
+  function camera(k) {
+    const r = hitOf(k), bx = +r.getAttribute("x"), by = +r.getAttribute("y"), bw = +r.getAttribute("width"), bh = +r.getAttribute("height");
+    const vw = innerWidth, vh = innerHeight, k0 = vw / VB.w;
+    const cx = (bx + bw / 2 - VB.x) * k0, cy = (by + bh / 2 - VB.y) * k0;
+    const wide = vw > 900;
+    const tx = wide ? vw * .68 : vw * .5, ty = wide ? vh * .52 : vh * .24;
+    let s = wide ? Math.min((vw * .52) / (bw * k0), (vh * .62) / (bh * k0)) : Math.min((vw * .86) / (bw * k0), (vh * .3) / (bh * k0));
+    s = Math.max(1.2, Math.min(s, 6));
+    stage.style.transform = `translate(${tx - cx * s}px, ${ty - cy * s}px) scale(${s})`;
+  }
+  function fill(k) {
+    const d = SPACES[k];
+    $("#pNum").textContent = d.num + " / 04";
+    $("#pKicker").textContent = d.kicker;
+    $("#pTitle").textContent = d.title;
+    $("#pBody").textContent = d.body;
+    $("#pFacts").innerHTML = d.facts.map((f) => `<li>${f}</li>`).join("");
+    const a = $("#pCta"), b = $("#pCta2");
+    a.textContent = d.cta[0] + " →"; a.href = d.cta[1];
+    b.textContent = d.cta2[0]; b.href = d.cta2[1];
+    const nk = ORDER[(ORDER.indexOf(k) + 1) % ORDER.length];
+    $("#next").innerHTML = `Next space: ${SPACES[nk].chip} <span aria-hidden="true">→</span>`;
+    $("#next").dataset.key = nk;
+  }
+  function flyTo(k) {
+    const switching = !!active;
+    active = k;
+    tag.classList.remove("show");
+    spot.setAttribute("href", `#${k}-art`);
+    document.body.classList.remove("hovering");
+    document.body.classList.add("zoomed");
+    camera(k);
+    clearTimeout(openTimer);
+    if (switching) document.body.classList.remove("open");
+    openTimer = setTimeout(() => {
+      fill(k);
+      document.body.classList.add("open");
+      panel.setAttribute("aria-hidden", "false");
+      $("#back").focus({ preventScroll: true });
+    }, switching ? 900 : 800);
+  }
+  function back() {
+    if (!active) return;
+    const k = active;
+    active = null;
+    clearTimeout(openTimer);
+    document.body.classList.remove("open", "zoomed");
+    panel.setAttribute("aria-hidden", "true");
+    stage.style.transform = "";
+    const chip = chips.querySelector(`[data-key="${k}"]`);
+    setTimeout(() => chip && chip.focus({ preventScroll: true }), 60);
+  }
+  $("#back").addEventListener("click", back);
+  $("#next").addEventListener("click", (e) => flyTo(e.currentTarget.dataset.key));
+  addEventListener("keydown", (e) => { if (e.key === "Escape") back(); });
+  stage.addEventListener("click", () => { if (active) back(); });
+
+  frame();
+  addEventListener("resize", () => { frame(); if (active) camera(active); });
+})();
+</script>
 </body>
 </html>
